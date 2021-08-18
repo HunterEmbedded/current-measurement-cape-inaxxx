@@ -1,0 +1,42 @@
+From 63b68fd0150006560e7b52734e0c351a0ac9dfb0 Mon Sep 17 00:00:00 2001
+From: Iain Hunter <iain@hunterembedded.co.uk>
+Date: Tue, 17 Aug 2021 15:40:54 +0100
+Subject: [PATCH] Fix bug introduced into K5.4 with change to
+ timespec64_to_ns()
+
+---
+ drivers/iio/adc/ina2xx-adc.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/iio/adc/ina2xx-adc.c b/drivers/iio/adc/ina2xx-adc.c
+index d3e9ec00e..c1ab3b594 100644
+--- a/drivers/iio/adc/ina2xx-adc.c
++++ b/drivers/iio/adc/ina2xx-adc.c
+@@ -777,6 +777,7 @@ static int ina2xx_capture_thread(void *data)
+ 	int ret;
+ 	struct timespec64 next, now, delta;
+ 	s64 delay_us;
++	s64 delta_ns;
+ 
+ 	/*
+ 	 * Poll a bit faster than the chip internal Fs, in case
+@@ -818,7 +819,15 @@ static int ina2xx_capture_thread(void *data)
+ 		do {
+ 			timespec64_add_ns(&next, 1000 * sampling_us);
+ 			delta = timespec64_sub(next, now);
+-			delay_us = div_s64(timespec64_to_ns(&delta), 1000);
++ 
++			/* From Kernel 5.4 timespec64_to_ns() includes a check for multiplicative overflow
++			 * which involves casting to u64
++			 * In this case when we pass in a delta tv_sec of -1 of type s64 it fails the test
++			 * and function returns 2^63
++			 * So emulate the old function here
++			 */
++			delta_ns = (((s64)delta.tv_sec) * NSEC_PER_SEC)+delta.tv_nsec;
++			delay_us = div_s64(delta_ns, 1000);
+ 		} while (delay_us <= 0);
+ 
+ 		usleep_range(delay_us, (delay_us * 3) >> 1);
+-- 
+2.25.1
+
