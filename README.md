@@ -7,8 +7,8 @@ This cape provides the following options for measuring current
 
 INA219 with a 3.3ohm 1% shunt to measure currents in range +/- 97mA
 INA226 with a 0.33ohm 1% shunt to measure currents in range +/- 970mA
-INA180A4 with a 0.15ohm 1% shunt + ADS1018 ADC to measure currents in range 0-970mA
-INA180A4 with a 1.5ohm 1% shunt + ADS1018 ADC to measure currents in range 0-97mA
+INA180A1 with a 1.5ohm 1% shunt + ADS1018 ADC with FSR of 2.048V to measure currents in range 0-97mA
+INA180A1 with a 0.15ohm 1% shunt + ADS1018 ADC with FSR of 2.048V to measure currents in range 0-970mA
 
 All shunts are Panasonic ERJ14s
 

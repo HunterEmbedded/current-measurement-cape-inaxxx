@@ -115,7 +115,7 @@ plotLayout = dict(title = pTitle,
 plotData=[];
 
 
-uAValues=[];
+mAValues=[];
 sampleTimes=[];
 
 
@@ -144,20 +144,20 @@ for row in c.execute("SELECT * FROM currentData"):
     timeDeltasArray=row[5]
 
     # create a list to hold the values read from packed buffer "blob"
-    uAValuesBlock = [0]*numberofSamplesPerBlob
+    mAValuesBlock = [0]*numberofSamplesPerBlob
     sampleTimesBlock = [0]*numberofSamplesPerBlob
 
     
     sampleTime=startTime;
 
     for i in range(numberofSamplesPerBlob): 
-	# as we are reading shorts offset is index * 2 bytes
-        uAValuesBlock[i]= (struct.unpack_from('=h',ADCValuesArray,i*2)[0] * scalingFactor)/1000
+	# as we are reading shorts offset is index * 2 bytes, convert nA to mA
+        mAValuesBlock[i]= (struct.unpack_from('=h',ADCValuesArray,i*2)[0] * scalingFactor)/(1000*1000)
         sampleTime += (struct.unpack_from('=h',timeDeltasArray,i*2)[0])
         sampleTimesBlock[i]=sampleTime/1000.0;
         
     lastTime=startTime
-    uAValues.extend(uAValuesBlock)
+    mAValues.extend(mAValuesBlock)
     sampleTimes.extend(sampleTimesBlock)
     
 
@@ -165,7 +165,7 @@ conn.close()
 
 
 # Add the data extracted to a plot
-plotData.append(go.Scatter( y=uAValues,x=sampleTimes,mode='lines',name="DuT"))
+plotData.append(go.Scatter( y=mAValues,x=sampleTimes,mode='lines',name="DuT"))
 
 
 # And finally display the data

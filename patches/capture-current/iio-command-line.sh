@@ -25,6 +25,7 @@ echo 1 > scan_elements/in_current3_en
 # enable collection of timestamps
 echo 1 > buffer/enable
 
+# dump captured data, note this is 16 bit little endian, so swap bytes to get 16 bit values
 cat /dev/iio:device1 | xxd &
 sleep 1
 

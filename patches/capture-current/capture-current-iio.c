@@ -47,14 +47,6 @@
 #define SAMPLE_FREQ_HZ 		2400
 #define SAMPLE_PERIOD_US	(1000000/SAMPLE_FREQ_HZ)
 
-#define FSR	    		4096			// FSR max 4096mV with 4.096 PGA gain
-#define SHUNT    		0.08F
-#define INA_GAIN		50.0F                   // INA180A2 with x50 gain
-
-// Calculate the scaling factor that converts from 11bit unsigned ADC (0 to 2048) to uA
-#define SCALING_FACTOR 	((FSR*1000.0)/(2048*SHUNT*INA_GAIN))  
-
-
 t_logData currentSamples;
 
 int find_type_by_name(const char *name, const char *type);
@@ -71,6 +63,22 @@ char *pActualElement=NULL;
 int actualDeviceChannel;
 int actualSampleRate=SAMPLE_FREQ_HZ;
 bool actualTrigger=false;
+
+
+/* As the ADS1018 just measures voltage we must also pass it the INA180 details 
+ * so that we can calculate the current.
+ * INA2xx driver reports current so calculation unnecessary
+ */ 
+int ads1018_fsr = 2048;
+int ina180_gain = 20;
+int shunt_mOhm = 150; 
+
+/* For INA2xx need to know max current to be measured */
+int ina2xx_maxCurrent_mA = 970;
+
+/* Factor to convert ADC output to mA, it is in nA per LSB */
+
+int scalingFactorLSB;
 
 void checkBeforeFree(void * buf)
 {
@@ -225,6 +233,7 @@ int main(int argc, char **argv)
 
 	bool stopFileDoesNotExist;
     int stringLength;
+    float scalingFactorLSBFloat;   
 
 
 	struct iio_channel_info *channels = NULL;
@@ -248,12 +257,16 @@ int main(int argc, char **argv)
             {"element"         , required_argument,    0   ,'e'},
             {"sample-rate"     , required_argument,    0   ,'s'},
             {"trigger"         , no_argument,          0   ,'t'},
-            {0,0,0,0}
+            {"ads1018_fsr"     , required_argument,    0   ,'v'},
+            {"ina180_gain"     , required_argument,    0   ,'g'},
+            {"ina180_shunt"    , required_argument,    0   ,'r'},
+            {"ina2xx_Imax"     , required_argument,    0   ,'m'},
+           {0,0,0,0}
         };
         
         int option_index = 0;
         
-        c = getopt_long(argc,argv,"d:e:s:t", long_options, &option_index);
+        c = getopt_long(argc,argv,"d:e:s:tv:g:r:m:", long_options, &option_index);
         
         if (c == -1)
             break;
@@ -281,11 +294,25 @@ int main(int argc, char **argv)
             {       actualTrigger = true;
                     break;
             }
+            case 'v':
+            {       ads1018_fsr = atoi(optarg);
+                    break;
+            }
+            case 'g':
+            {       ina180_gain = atoi(optarg);
+                    break;
+            }
+            case 'r':
+            {       shunt_mOhm = atoi(optarg);
+                    break;
+            }
+            case 'm':
+            {       ina2xx_maxCurrent_mA = atoi(optarg);
+                    break;
+            }
 
         }
     }
-	
-	
 	// Set the default device name if not set by arguments
 	if (pActualDevice == NULL)
     {
@@ -301,6 +328,28 @@ int main(int argc, char **argv)
         pActualElement = malloc(stringLength+1);
         strcpy(pActualElement,defaultElement);
     }
+    
+    
+    /* Work out scaling factor based on device */
+    if (!strcmp("ads1018",pActualDevice))
+    {
+        // It's an ads1018 so need to work out scaling factor (nA per LSB)
+        // 2048 is because it is an 12 bit signed ADC (can't use negative range in single ended
+        // and so only 11 bits are valid
+        printf("fsr %d shunt %d gain %d\n",ads1018_fsr,shunt_mOhm,ina180_gain);
+        scalingFactorLSBFloat = (((float)ads1018_fsr*1000.0*1000.0*1000.0)/(2048.0*(float)shunt_mOhm*(float)ina180_gain));
+        printf("scaling float %f\n",scalingFactorLSBFloat);
+        scalingFactorLSB=(int)scalingFactorLSBFloat;
+    }
+    else
+    {
+        // It's an ina2xx so scaling factor is based on max current measured over 15 bits.
+        // It is current per LSB and is in nA with the multiplication by 1000 to allow it to be an int
+        scalingFactorLSBFloat = ((float)ina2xx_maxCurrent_mA*1000.0*1000.0)/32768.0;
+        scalingFactorLSB=(int)scalingFactorLSBFloat;
+    }
+    
+    printf("Scaling factor (nA per LSB )%d\n", scalingFactorLSB);
     
     // Now find device number in IIO based on its name
 	dev_num = find_type_by_name(pActualDevice, "iio:device");
@@ -556,7 +605,7 @@ int main(int argc, char **argv)
 			if (i==0)
 			{
 				currentSamples.startTime=TSmicrosecond;
-				currentSamples.scalingFactor=SCALING_FACTOR;
+				currentSamples.scalingFactor=scalingFactorLSB;
 				currentSamples.samplePeriod=SAMPLE_PERIOD_US;
 				currentSamples.numberSamplesPerBlob=NUMBER_SAMPLES_PER_DB_WRITE;
 				currentSamples.timeDeltaUs[i]=0;
