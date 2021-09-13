@@ -151,49 +151,15 @@ fi
 
 	  cd board-support/${KERNEL_VER} ||  exit
 	  
-      git am ${GIT_BASE_DIR}/patches/kernel/0002-add-ADS1018-driver-to-IIO-and-connect-it-to-SPI-on-B.patch || exit
-      git am ${GIT_BASE_DIR}/patches/kernel/0003-Fix-bug-introduced-into-K5.4-with-change-to-timespec.patch || exit
-      git am ${GIT_BASE_DIR}/patches/kernel/0004-add-ina219-and-226-to-the-device-tree.patch || exit
- 	 
+	git am ${GIT_BASE_DIR}/patches/kernel/0002-add-ADS1018-driver-to-IIO-and-connect-it-to-SPI-on-B.patch || exit
+ 	git am ${GIT_BASE_DIR}/patches/kernel/0003-Fix-bug-introduced-into-K5.4-with-change-to-timespec.patch || exit
+	git am ${GIT_BASE_DIR}/patches/kernel/0004-add-ina219-and-226-to-the-device-tree.patch || exit
+	git am ${GIT_BASE_DIR}/patches/kernel/0005-add-extra-logging.patch || exit
+ 	git am ${GIT_BASE_DIR}/patches/kernel/0006-add-support-for-maximum-current-to-measure-to-ina2xx.patch || exit	 
 	  cd ../..
 	  # create this file to say kernel has been patched. To recreate from scratch delete this file
 	  touch kernel.patched
     fi
-
-
-	if [ ! -f uboot.patched ]
-	then
-
-        cd board-support/
-        #if a clean tar file does not exist then create one
-        if [ ! -e tar-${UBOOT}.tar.gz ]
-        then
-            # add a "tar-" in front of name to avoid confusing makefile
-            tar -czf tar-${UBOOT}.tar.gz ${UBOOT}
-            # and move current directory to a backup
-            cp -r ${UBOOT} ${UBOOT}-clean
-
-        else
-            # as tar file exists then delete working build and repopulate with clean tar 
-            echo "extract tar u-boot"
-            sudo rm -r ${UBOOT}
-            tar -xf tar-${UBOOT}.tar.gz
-        fi
-
-        cd ..
-
-        # clean it just to be sure
-        make u-boot_clean
-
-        # apply patch for BBB
-        cd board-support/${UBOOT}
-
-        # no patches applied here
-        cd ../..
-        # create this file to say u-boot has been patched. To recreate from scratch delete this file
-        touch uboot.patched
-    fi
-
 
 
 	##### Make uboot  - actual config is defined in Rules.make
