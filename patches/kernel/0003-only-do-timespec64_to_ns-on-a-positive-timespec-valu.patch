@@ -1,0 +1,43 @@
+From eec9f99b09a8651455cf13c6f2f8c50d7940950c Mon Sep 17 00:00:00 2001
+From: Iain Hunter <drhunter95@gmail.com>
+Date: Wed, 22 Sep 2021 10:44:14 +0100
+Subject: [PATCH 1/2] only do timespec64_to_ns() on a positive timespec value
+
+---
+ drivers/iio/adc/ina2xx-adc.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/iio/adc/ina2xx-adc.c b/drivers/iio/adc/ina2xx-adc.c
+index d3e9ec00e..e86a419ad 100644
+--- a/drivers/iio/adc/ina2xx-adc.c
++++ b/drivers/iio/adc/ina2xx-adc.c
+@@ -777,6 +777,7 @@ static int ina2xx_capture_thread(void *data)
+ 	int ret;
+ 	struct timespec64 next, now, delta;
+ 	s64 delay_us;
++    int skip_next_sample;
+ 
+ 	/*
+ 	 * Poll a bit faster than the chip internal Fs, in case
+@@ -817,10 +819,15 @@ static int ina2xx_capture_thread(void *data)
+ 		 */
+ 		do {
+ 			timespec64_add_ns(&next, 1000 * sampling_us);
+-			delta = timespec64_sub(next, now);
+-			delay_us = div_s64(timespec64_to_ns(&delta), 1000);
+-		} while (delay_us <= 0);
+ 
++			if(timespec64_compare(&next,&now) < 0)
++				skip_next_sample = 1;
++			else
++				skip_next_sample = 0;
++		} while (skip_next_sample);
++
++		delta = timespec64_sub(next, now);
++		delay_us = div_s64(timespec64_to_ns(&delta), 1000);
+ 		usleep_range(delay_us, (delay_us * 3) >> 1);
+ 
+ 	} while (!kthread_should_stop());
+-- 
+2.25.1
+

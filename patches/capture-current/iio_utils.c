@@ -679,8 +679,7 @@ static int _write_sysfs_int(const char *filename, const char *basedir, int val,
 	ret = sprintf(temp, "%s/%s", basedir, filename);
 	if (ret < 0)
 		goto error_free;
-
-	sysfsfp = fopen(temp, "w");
+    sysfsfp = fopen(temp, "w");
 	if (!sysfsfp) {
 		ret = -errno;
 		fprintf(stderr, "failed to open %s\n", temp);
@@ -744,6 +743,7 @@ error_free:
  **/
 int write_sysfs_int(const char *filename, const char *basedir, int val)
 {
+    printf("write_sysfs_int() %s%s, %d\n", basedir, filename, val);
 	return _write_sysfs_int(filename, basedir, val, 0);
 }
 
@@ -759,6 +759,7 @@ int write_sysfs_int(const char *filename, const char *basedir, int val)
 int write_sysfs_int_and_verify(const char *filename, const char *basedir,
 			       int val)
 {
+    printf("write_sysfs_int_and_verify() %s%s, %d\n",basedir,filename,val);
 	return _write_sysfs_int(filename, basedir, val, 1);
 }
 
@@ -845,6 +846,8 @@ error_free:
 int write_sysfs_string_and_verify(const char *filename, const char *basedir,
 				  const char *val)
 {
+    printf("write_sysfs_string_and_verify() %s/%s, %s\n",basedir,filename,val);
+
 	return _write_sysfs_string(filename, basedir, val, 1);
 }
 
@@ -859,6 +862,7 @@ int write_sysfs_string_and_verify(const char *filename, const char *basedir,
 int write_sysfs_string(const char *filename, const char *basedir,
 		       const char *val)
 {
+    printf("write_sysfs_string() %s%s, %s\n",basedir,filename,val);
 	return _write_sysfs_string(filename, basedir, val, 0);
 }
 

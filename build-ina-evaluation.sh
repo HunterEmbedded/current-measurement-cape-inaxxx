@@ -152,10 +152,10 @@ fi
 	  cd board-support/${KERNEL_VER} ||  exit
 	  
 	git am ${GIT_BASE_DIR}/patches/kernel/0002-add-ADS1018-driver-to-IIO-and-connect-it-to-SPI-on-B.patch || exit
- 	git am ${GIT_BASE_DIR}/patches/kernel/0003-Fix-bug-introduced-into-K5.4-with-change-to-timespec.patch || exit
+	git am ${GIT_BASE_DIR}/patches/kernel/0003-only-do-timespec64_to_ns-on-a-positive-timespec-valu.patch || exit
 	git am ${GIT_BASE_DIR}/patches/kernel/0004-add-ina219-and-226-to-the-device-tree.patch || exit
 	git am ${GIT_BASE_DIR}/patches/kernel/0005-add-extra-logging.patch || exit
- 	git am ${GIT_BASE_DIR}/patches/kernel/0006-add-support-for-maximum-current-to-measure-to-ina2xx.patch || exit	 
+	git am ${GIT_BASE_DIR}/patches/kernel/0006-add-support-for-maximum-current-to-measure-to-ina2xx.patch || exit	 
 	  cd ../..
 	  # create this file to say kernel has been patched. To recreate from scratch delete this file
 	  touch kernel.patched
