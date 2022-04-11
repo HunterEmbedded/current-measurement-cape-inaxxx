@@ -23,16 +23,6 @@ SDK_DIR=`pwd`
 # Now manage the build target board and the boot mode (SD card) 
 ################################################################################
 
-# Are we using BBB (1) or BBG (2)
-BBB_PLATFORM=1
-
-# if writing direct to pre-existing SD card (1) or creating a full tar ball (0)
-ROOTFS_ON_SD=0
-
-# Are we just building user space
-BUILD_USER_SPACE_ONLY=0
-
-
 # Base filesystem name
 FS_NAME=ina-evaluation
 
@@ -65,131 +55,99 @@ sed "s/${KERNEL_VER_BASE}/${KERNEL_VER}/g" Rules.make.orig > Rules.make
 
 
 # now create board specific file system
-if [ ${ROOTFS_ON_SD} -eq 1 ] 
+FS="${FS_NAME}-filesystem"
+TAR_FS="tar-${FS}" 
+
+export INSTALL_PATH="${SDK_DIR}/${FS}"
+
+
+if [ ! -e ${FS} ]
 then
-   FS="/media/iain/rootfs"
-   export INSTALL_PATH="${FS}"
+     mkdir ${FS}
 else
-
-   FS="${FS_NAME}-filesystem"
-   TAR_FS="tar-${FS}" 
-
-   export INSTALL_PATH="${SDK_DIR}/${FS}"
-
-fi 
-
-if [ ${ROOTFS_ON_SD} -eq 1 ] 
+     cd ${FS}
+     sudo rm -r *  
+     cd ..
+fi
+if [ ! -e ${TAR_FS} ]
 then
-  # check that SD card is mounted before starting 
-   if [ ! -e ${FS} ] 
-   then
-      echo "SD card not mounted"
-      exit
-   fi
+     mkdir ${TAR_FS}
 fi
 
-#if [ ${BUILD_USER_SPACE_ONLY} -eq 0 ]
-#then 
-	if [ ${ROOTFS_ON_SD} -eq 0 ] 
-	then
-	   # only clean FS when creating a new partition
 
-	   if [ ! -e ${FS} ]
-	   then
-	     mkdir ${FS}
-	   else
-	     cd ${FS}
-	     sudo rm -r *  
-	     cd ..
-	   fi
-	   if [ ! -e ${TAR_FS} ]
-	   then
-	     mkdir ${TAR_FS}
-	   fi
+# extract default sdk filesystem to get dropbear (ssh) and lighttpd for this application
+cd ${FS}
+sudo tar -xJf ../filesystem/tisdk-base-image-am335x-evm.tar.xz .
+#sudo tar -xJf ../filesystem/tisdk-default-image-am335x-evm.tar.xz .
+cd ..
 
 
-	   # extract base sdk filesystem to get it small
-	   cd ${FS}
- 	   sudo tar -xJf ../filesystem/tisdk-base-image-am335x-evm.tar.xz .
- 	   #sudo tar -xJf ../filesystem/tisdk-default-image-am335x-evm.tar.xz .
-	   cd ..
-	fi
+##### Patch the kernel as required
+if [ ! -f kernel.patched ]
+then
 
-
-	##### Patch the kernel as required
-	if [ ! -f kernel.patched ]
-	then
-
-	  cd board-support/
-	  #if a clean tar file does not exist then create one
-	  if [ ! -e ${KERNEL_VER_BASE}.tar.gz ]
-	  then
-	    tar -czf ${KERNEL_VER_BASE}.tar.gz ${KERNEL_VER_BASE}
-	    # and move current directory to a backup
-	    cp -r ${KERNEL_VER_BASE} ${KERNEL_VER_BASE}-clean
-	    mv ${KERNEL_VER_BASE} ${KERNEL_VER}
-
-	  else
-	    # as tar file exists then delete working build and repopulate with clean tar 
-	    echo "extract tar kernel"
-	    sudo rm -r ${KERNEL_VER}
-	    tar -xf ${KERNEL_VER_BASE}.tar.gz
-	    mv ${KERNEL_VER_BASE} ${KERNEL_VER}
-	  fi
-	  
-	  # As 7.02 is missing some files from git commit them here
-	  cd ${KERNEL_VER}
-	  git add arch/arm/boot/dts/am335x-boneblack-pru-adc.dts
-	  git add arch/arm/boot/dts/am335x-pru-adc.dtsi
-	  git add arch/arm/configs/tisdk_am335x-evm_defconfig
-	  
-	  git commit -a -m "add files missing from GIT in SDK"
-	  
-	  cd ../..
-	  # clean it just to be sure
-	  make linux_clean
-
-	  cd board-support/${KERNEL_VER} ||  exit
-	  
-	git am ${GIT_BASE_DIR}/patches/kernel/0002-add-ADS1018-driver-to-IIO-and-connect-it-to-SPI-on-B.patch || exit
-	git am ${GIT_BASE_DIR}/patches/kernel/0003-only-do-timespec64_to_ns-on-a-positive-timespec-valu.patch || exit
-	git am ${GIT_BASE_DIR}/patches/kernel/0004-add-ina219-and-226-to-the-device-tree.patch || exit
-	git am ${GIT_BASE_DIR}/patches/kernel/0005-add-extra-logging.patch || exit
-	git am ${GIT_BASE_DIR}/patches/kernel/0006-add-support-for-maximum-current-to-measure-to-ina2xx.patch || exit	 
-	  cd ../..
-	  # create this file to say kernel has been patched. To recreate from scratch delete this file
-	  touch kernel.patched
+    cd board-support/
+    #if a clean tar file does not exist then create one
+    if [ ! -e ${KERNEL_VER_BASE}.tar.gz ]
+    then
+        tar -czf ${KERNEL_VER_BASE}.tar.gz ${KERNEL_VER_BASE}
+        # and move current directory to a backup
+        cp -r ${KERNEL_VER_BASE} ${KERNEL_VER_BASE}-clean
+        mv ${KERNEL_VER_BASE} ${KERNEL_VER}
+    else
+        # as tar file exists then delete working build and repopulate with clean tar 
+        echo "extract tar kernel"
+        sudo rm -r ${KERNEL_VER}
+        tar -xf ${KERNEL_VER_BASE}.tar.gz
+        mv ${KERNEL_VER_BASE} ${KERNEL_VER}
     fi
+	  
+    # As 7.02 is missing some files from git commit them here
+    cd ${KERNEL_VER}
+    git add arch/arm/boot/dts/am335x-boneblack-pru-adc.dts
+    git add arch/arm/boot/dts/am335x-pru-adc.dtsi
+    git add arch/arm/configs/tisdk_am335x-evm_defconfig
+  
+    git commit -a -m "add files missing from GIT in SDK"
+  
+    cd ../..
+    # clean it just to be sure
+    make linux_clean
+
+    cd board-support/${KERNEL_VER} ||  exit
+	  
+    git am ${GIT_BASE_DIR}/patches/kernel/0001-enable-IIO-INA2xx-driver.patch || exit
+    git am ${GIT_BASE_DIR}/patches/kernel/0002-add-ADS1018-driver-to-IIO-and-connect-it-to-SPI-on-B.patch || exit
+    git am ${GIT_BASE_DIR}/patches/kernel/0003-only-do-timespec64_to_ns-on-a-positive-timespec-valu.patch || exit
+    git am ${GIT_BASE_DIR}/patches/kernel/0004-add-device-tree-support-for-inaxxx-cape-v4.1.3.patch || exit
+    cd ../..
+    # create this file to say kernel has been patched. To recreate from scratch delete this file
+    touch kernel.patched
+fi
 
 
-	##### Make uboot  - actual config is defined in Rules.make
-	make u-boot
+##### Make uboot  - actual config is defined in Rules.make
+make u-boot
 
 
-	##### Make the kernel 
-	make linux MAKE_JOBS=8 || exit
+##### Make the kernel 
+make linux MAKE_JOBS=8 || exit
 
 
-	#The main linux_install script uses Rules.mak to set filesystem. We are not using that directory here and so
-	# we will explicitly call the install routines so ${FS} can be passed
-	#sudo make linux_install
-	sudo install -d ${FS}/boot
-	sudo install board-support/${KERNEL_VER}/arch/arm/boot/zImage ${FS}/boot
+#The main linux_install script uses Rules.mak to set filesystem. We are not using that directory here and so
+# we will explicitly call the install routines so ${FS} can be passed
+#sudo make linux_install
+sudo install -d ${FS}/boot
+sudo install board-support/${KERNEL_VER}/arch/arm/boot/zImage ${FS}/boot
 
-	# reduce filesystem size by removing original zImage
-	sudo rm ${FS}/boot/zImage-${KERNEL_VER}
+# reduce filesystem size by removing original zImage
+sudo rm ${FS}/boot/zImage-${KERNEL_VER}
 
-	sudo install board-support/${KERNEL_VER}/System.map ${FS}/boot
-	sudo cp -f board-support/${KERNEL_VER}/arch/arm/boot/dts/*.dtb ${FS}/boot/
+sudo install board-support/${KERNEL_VER}/System.map ${FS}/boot
+sudo cp -f board-support/${KERNEL_VER}/arch/arm/boot/dts/*.dtb ${FS}/boot/
 
 	
-	if [ ${ROOTFS_ON_SD} -eq 1 ] 
-	then
-	   sudo make -C board-support/${KERNEL_VER} ARCH=arm CROSS_COMPILE=${CROSS_COMPILE} INSTALL_MOD_PATH=${FS} modules_install  
-	else
-	   sudo make -C board-support/${KERNEL_VER} ARCH=arm CROSS_COMPILE=${CROSS_COMPILE} INSTALL_MOD_PATH=${SDK_DIR}/${FS} modules_install  
-	fi
-#fi
+sudo make -C board-support/${KERNEL_VER} ARCH=arm CROSS_COMPILE=${CROSS_COMPILE} INSTALL_MOD_PATH=${SDK_DIR}/${FS} modules_install  
 
 # Build sqlite from source
 if [ ! -e sqlite-downloaded ]
@@ -235,8 +193,9 @@ then
        sudo sh -c "echo '/usr/local/lib' >> ${INSTALL_PATH}/etc/ld.so.conf"
 fi
 
-# copy in the app
-cp -r ${GIT_BASE_DIR}/patches/capture-current . || exit
+######################################################################################################
+# copy in the app and build it
+cp -rp ${GIT_BASE_DIR}/patches/capture-current . || exit
 
 cd capture-current || exit
 make CC=${TOOLCHAIN_PATH}/${CROSS_COMPILE}gcc || exit
@@ -248,12 +207,13 @@ sudo mkdir -p ${INSTALL_PATH}/etc/avahi/services  || exit
 sudo cp cm.service ${INSTALL_PATH}/etc/avahi/services  || exit
 sudo cp check-free-disk.sh ${INSTALL_PATH}/opt/  || exit
 sudo mkdir -p ${INSTALL_PATH}/etc/lighttpd
+
+# This overwrites default SDK matrix gui web interface
 sudo cp lighttpd-current-capture.conf ${INSTALL_PATH}/etc/lighttpd/lighttpd.conf  || exit
 
 sudo cp test.sh ${INSTALL_PATH}/opt/  || exit
-sudo cp iio-command-line.sh ${INSTALL_PATH}/opt/  || exit
-sudo cp iio-app-test.sh ${INSTALL_PATH}/opt/  || exit
-
+sudo cp iio-command-line-v4-1-3.sh ${INSTALL_PATH}/opt/  || exit
+sudo cp iio-app-test-v4-1-3.sh ${INSTALL_PATH}/opt/  || exit
 
 
 # Auto start the swupdate process using systemctl
@@ -263,10 +223,6 @@ sudo cp iio-app-test.sh ${INSTALL_PATH}/opt/  || exit
 cd ${INSTALL_PATH}
 sudo ln -s lib/systemd/system/cm-systemd.service etc/systemd/system/multi-user.target.wants/cm-systemd.service    
 cd -
-
-
-cd ..
-
 
 
 # Now cd to the filesystem directory
@@ -288,6 +244,9 @@ sudo tar --wildcards -xJf ../filesystem/tisdk-default-image-am335x-evm.tar.xz ./
 # this is equivalent to "systemctl enable" running on the the target
 sudo ln -s lib/systemd/system/lighttpd.service etc/systemd/system/multi-user.target.wants/lighttpd.service    
 
+# We also want dropbear to provide ssh
+sudo tar --wildcards -xJf ../filesystem/tisdk-default-image-am335x-evm.tar.xz ./usr/sbin/dropbear* ./etc/rc*.d/*10dropbear ./etc/init.d/dropbear ./etc/pam.d/dropbear ./etc/dropbear ./etc/systemd/system/sockets.target.wants/dropbear.socket ./lib/systemd/system-preset/98-dropbear.preset ./lib/systemd/system/dropbear*.service ./lib/systemd/system/dropbear*.socket
+
 
 #Copy the python data visualisation script to a clean directory on HOST
 if [ ! -e ${SDK_DIR}/python ]
@@ -302,39 +261,25 @@ fi
 cp ${GIT_BASE_DIR}/patches/python/*.py ${SDK_DIR}/python/ || exit
 
 
-#cp ${SDK_DIR}/patches/app/* opt/ || exit
-
-
-if [ ${ROOTFS_ON_SD} -eq 0 ] 
-then
-   cd ${SDK_DIR}
-   cd ${INSTALL_PATH}
+cd ${INSTALL_PATH}
    
  
-   # create full tar file for SD filesystem
-   sudo tar -cJf ../${TAR_FS}/rootfs_partition.tar.xz *
+# create full tar file for SD filesystem
+sudo tar -cJf ../${TAR_FS}/rootfs_partition.tar.xz *
  
-   # change to boot, and only remove files if that 'cd' command executed correctly 
-   # remove existing mlo, u-boot from directory, we can't copy symbolic links to FAT  
-   # ensure it is target filesystem boot and not host /boot !!!
-   cd ../${FS}/boot && sudo rm -r *
+# change to boot, and only remove files if that 'cd' command executed correctly 
+# remove existing mlo, u-boot from directory, we can't copy symbolic links to FAT  
+# ensure it is target filesystem boot and not host /boot !!!
+cd ../${FS}/boot && sudo rm -r *
 
-   # as we are writing to a FAT ultimately symbolic links don't work, so remove them by writing to target names
-   sudo cp ../../board-support/${UBOOT}/MLO MLO
-   sudo cp ../../board-support/${UBOOT}/u-boot.img u-boot.img
+# as we are writing to a FAT ultimately symbolic links don't work, so remove them by writing to target names
+sudo cp ../../board-support/${UBOOT}/MLO MLO
+sudo cp ../../board-support/${UBOOT}/u-boot.img u-boot.img
 
-   sudo tar -cJf ../../${TAR_FS}/boot_partition.tar.xz *
+sudo tar -cJf ../../${TAR_FS}/boot_partition.tar.xz *
 
 
 
-   cd ../..
-   
-   echo "FINISHED"
-else
-   # just sync to SD card
-   cd ${SDK_DIR}
-   sync
-   umount /media/${USER}/rootfs
-   umount /media/${USER}/boot
-fi 
-
+cd ../..
+ 
+echo "FINISHED"

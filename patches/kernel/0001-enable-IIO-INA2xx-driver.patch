@@ -1,0 +1,25 @@
+From d7b449a70b56b820a0c09344b7862cee6f9b6323 Mon Sep 17 00:00:00 2001
+From: Iain Hunter <drhunter95@gmail.com>
+Date: Mon, 11 Apr 2022 12:50:49 +0100
+Subject: [PATCH] enable IIO INA2xx driver
+
+---
+ arch/arm/configs/tisdk_am335x-evm_defconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/configs/tisdk_am335x-evm_defconfig b/arch/arm/configs/tisdk_am335x-evm_defconfig
+index ca7be739c..62ccc19ce 100644
+--- a/arch/arm/configs/tisdk_am335x-evm_defconfig
++++ b/arch/arm/configs/tisdk_am335x-evm_defconfig
+@@ -5463,7 +5463,7 @@ CONFIG_CPCAP_ADC=m
+ # CONFIG_ENVELOPE_DETECTOR is not set
+ # CONFIG_HI8435 is not set
+ # CONFIG_HX711 is not set
+-# CONFIG_INA2XX_ADC is not set
++CONFIG_INA2XX_ADC=m
+ # CONFIG_LTC2471 is not set
+ # CONFIG_LTC2485 is not set
+ # CONFIG_LTC2497 is not set
+-- 
+2.25.1
+
