@@ -35,22 +35,23 @@ Assumption is that git is installed and configured already.
     inaxxx-evaluation-bbb$ ./build-bbb-image-inaxxx.sh
 ```
 
-The output of the build process is a pair of tar files
-    - `tar-current-measurement-filesystem-bbb/boot_partition.tar.gz` 
-    - `tar-current-measurement-filesystem-bbb/rootfs_partition.tar.gz`
+The output of the build process is a pair of tar files:
+- `tar-ina-evaluation-filesystem-bbb/boot_partition.tar.gz` 
+- `tar-ina-evaluation-filesystem-bbb/rootfs_partition.tar.gz`
 
 ## To create the SD card: 
-    Use the TI SDK application `bin/create-sdcard.sh` and choose the custom file option to programme these `boot_partition.tar.gz` and `rootfs_partition.tar.gz files`.
+Use the TI SDK application `bin/create-sdcard.sh` and choose the custom file option to programme these `boot_partition.tar.gz` and `rootfs_partition.tar.gz files`.
 
 
 ## To run:
+Log in via SSH (address allocated by your DHCP server) or via a terminal over serial. Use the username "root" and password "root". 
 There are two examples to help understand the application
 - /opt/iio-command-line-v4.1.3.sh controls the IIO via sysfs
 - /opt/iio-app-test-v4.1.3.sh calls the C app to capture using IIO and store to a local database 
     
-To visualise the data from the host/development PC (assuming RPi is connected via Ethernet to the network)
+To visualise the data from the host/development PC (assuming RPi is connected via Ethernet to the network). Run this from the root dirctory of the SDK
 ```
-cd python
-python$ python3 show-current.py
+ti-sdk-7-03$ cd python
+ti-sdk-7-03/python$ python3 show-current.py
 ```    
-This will connect to the RPi (identified by Avahi packets), list available current capture database files and then allow one to be selected and displayed.
+This will connect to the BBB (identified by Avahi packets), list available current capture database files and then allow one to be selected and displayed.
