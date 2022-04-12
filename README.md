@@ -1,7 +1,7 @@
 # inaxx-bbb-evaluation
-Support for INA evaluation cape to TI Processor SDK 7.03 on BeagleBone running Kernel 5.4.106
+Support for INA evaluation cape to TI Processor [SDK 7.03](software-dl.ti.com/processor-sdk-linux/esd/AM335X/latest/exports/ti-processor-sdk-linux-am335x-evm-07.03.00.005-Linux-x86-Install.bin) on BeagleBone Black running Kernel 5.4.106
 
-This package will build an SD card img for a BBB based on the AM335x TI SDK v7.03 with support for the Hunter Embedded Current Measurement INAXXX Evaluation Board (v4.1.3). This board is available on [Amazon](https://www.amazon.co.uk/INAxxx-Current-Measurement-Evaluation-Cape/dp/B09TYTXM68) .
+This package will build an SD card img for a BBB based on the AM335x TI SDK v7.03 with support for the Hunter Embedded Current Measurement INAXXX Evaluation Board (v4.1.3). This board is available on [Amazon](https://www.amazon.co.uk/INAxxx-Current-Measurement-Evaluation-Cape/dp/B09TYTXM68).
 
 This board provides the following options for measuring current:
 
@@ -40,7 +40,7 @@ The output of the build process is a pair of tar files:
 - `tar-ina-evaluation-filesystem-bbb/rootfs_partition.tar.gz`
 
 ## To create the SD card: 
-Use the TI SDK application `bin/create-sdcard.sh` and choose the custom file option to programme these `boot_partition.tar.gz` and `rootfs_partition.tar.gz files`.
+Use the TI SDK application `bin/create-sdcard.sh` and choose the custom file option to programme the files `boot_partition.tar.gz` and `rootfs_partition.tar.gz files`.
 
 
 ## To run:
@@ -49,7 +49,7 @@ There are two examples to help understand the application
 - /opt/iio-command-line-v4.1.3.sh controls the IIO via sysfs
 - /opt/iio-app-test-v4.1.3.sh calls the C app to capture using IIO and store to a local database 
     
-To visualise the data from the host/development PC (assuming RPi is connected via Ethernet to the network). Run this from the root dirctory of the SDK
+To visualise the data from the host/development PC (assuming BBB is connected via Ethernet to the network). Run this from the root dirctory of the SDK
 ```
 ti-sdk-7-03$ cd python
 ti-sdk-7-03/python$ python3 show-current.py
