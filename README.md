@@ -1,15 +1,15 @@
 # inaxx-bbb-evaluation
 Support for INA evaluation cape to TI Processor [SDK 7.03](software-dl.ti.com/processor-sdk-linux/esd/AM335X/latest/exports/ti-processor-sdk-linux-am335x-evm-07.03.00.005-Linux-x86-Install.bin) on BeagleBone Black running Kernel 5.4.106
 
-This package will build an SD card img for a BBB based on the AM335x TI SDK v7.03 with support for the Hunter Embedded Current Measurement INAXXX Evaluation Board (v4.1.3). This board is available on [Amazon](https://www.amazon.co.uk/INAxxx-Current-Measurement-Evaluation-Cape/dp/B09TYTXM68).
+This package will build an SD card img for a BBB based on the AM335x TI SDK v7.03 with support for the [Hunter Embedded Current Measurement INAXXX Evaluation Board (v4.1.3)](http://www.hunterembedded.co.uk/inaxxx-evaluation-board-for-raspberry-pi-and-beaglebone/). This board is available on [Amazon](https://www.amazon.co.uk/INAxxx-Current-Measurement-Evaluation-Cape/dp/B09TYTXM68).
 
 This board provides the following options for measuring current:
 
-- INA219 with a 0.33ohm 1% shunt to measure currents in range +/- 970mA
-- INA180A2 with a 0.082ohm 1% shunt + ADS1018 ADC with FSR of 4.096V to measure currents in range 0-1024mA
+- INA219 with a 0.33ohm 1% shunt to measure currents in range +/- 970mA. There is no input filter on the INA219.
+- INA180A2 with a 0.082ohm 1% shunt + ADS1018 ADC with FSR of 4.096V to measure currents in range 0-1024mA. The ADS1018 has an input low pass filter with a cut off frequency of 1682Hz.
 - The footprint for an INA226 is also present but not populated due to component shortage.
 
-All shunts are Panasonic ERJ14s
+All shunts are Panasonic ERJ14s. The schematics are also available on [github](https://github.com/HunterEmbedded/inaxxx-evaluation-schematics).
 
 
 
